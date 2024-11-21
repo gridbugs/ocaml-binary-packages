@@ -161,3 +161,59 @@ jobs:
         with:
           allowUpdates: true
           artifacts: "*.tar.gz"
+
+  ocamlformat-build-script:
+    name: ocamlformat binaries via build.sh
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [macos-14, macos-13]
+        ocaml: ["5.2.1", "5.1.1"]
+        include:
+          - os: ubuntu-latest
+            version: "0.26.2"
+            ocaml: "5.2.1"
+            linking: static
+            target_triple: x86_64-unknown-linux-musl
+          - os: macos-13
+            version: "0.26.2"
+            ocaml: "5.2.1"
+            linking: dynamic
+            target_triple: x86_64-apple-darwin
+          - os: macos-14
+            version: "0.26.2"
+            ocaml: "5.2.1"
+            linking: dynamic
+            target_triple: aarch64-apple-darwin
+          - os: ubuntu-latest
+            version: "0.26.1"
+            ocaml: "5.1.1"
+            linking: static
+            target_triple: x86_64-unknown-linux-musl
+          - os: macos-13
+            version: "0.26.1"
+            ocaml: "5.1.1"
+            linking: dynamic
+            target_triple: x86_64-apple-darwin
+          - os: macos-14
+            version: "0.26.1"
+            ocaml: "5.1.1"
+            linking: dynamic
+            target_triple: aarch64-apple-darwin
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+      - uses: actions/checkout@v4
+      - name: Build ocamlformat
+        run: |
+          TAG=${{ github.ref_name }} TARGET=${{ matrix.target_triple }} OCAML_VERSION=${{ matrix.ocaml }} OCAMLFORMAT_VERSION=${{ matrix.version }} OUTPUT=$(pwd)/ocamlformat.${{ matrix.version }}+binary-ocaml-${{ matrix.ocaml }}-built-${{ github.ref_name }}-${{ matrix.target_triple }}.tar.gz build-scripts/ocamlformat/build.sh
+      - uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+ 
