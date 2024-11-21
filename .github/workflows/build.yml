@@ -5,107 +5,6 @@ on:
     - '*'
 
 jobs:
-  ocamlformat:
-    name: Build ocamlformat binaries
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-13, macos-14]
-        ocaml: ["5.2.0"]
-        include:
-          - os: ubuntu-latest
-            version: "0.26.2"
-            linking: static
-            target_triple: x86_64-unknown-linux-musl
-          - os: macos-13
-            version: "0.26.2"
-            linking: dynamic
-            target_triple: x86_64-apple-darwin
-          - os: macos-14
-            version: "0.26.2"
-            linking: dynamic
-            target_triple: aarch64-apple-darwin
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Set archive environment variables
-        run: |
-          echo "FLAKE_NAME=./flakes/ocamlformat/#ocamlformat_$(echo ${{ matrix.version }} | tr . _)_ocaml_$(echo ${{ matrix.ocaml }} | tr . _)_${{ matrix.linking }}" >> $GITHUB_ENV
-          echo "ARCHIVE_NAME=ocamlformat.${{ matrix.version }}+binary-ocaml-${{ matrix.ocaml }}-built-${{ github.ref_name }}-${{ matrix.target_triple }}" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v22
-      - name: Build ocamlformat
-        run: |
-          nix build $FLAKE_NAME
-          mkdir -p $ARCHIVE_NAME
-          cp -r result/* $ARCHIVE_NAME
-          cp -r flakes/ocamlformat/static/* $ARCHIVE_NAME
-          find $ARCHIVE_NAME -type d -exec chmod +w {} +
-          tar --format=posix -cvf $ARCHIVE_NAME.tar $ARCHIVE_NAME
-          gzip -9 $ARCHIVE_NAME.tar
-      - uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: "*.tar.gz"
-
-  ocaml-lsp-server:
-    name: Build ocaml-lsp-server binaries
-    permissions:
-      contents: write
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-13]
-        ocaml: ["5.2.0", "5.1.1"]
-        include:
-          - os: ubuntu-latest
-            version: "1.19.0"
-            ocaml: "5.2.0"
-            linking: static
-            target_triple: x86_64-unknown-linux-musl
-          - os: macos-13
-            version: "1.19.0"
-            ocaml: "5.2.0"
-            linking: dynamic
-            target_triple: x86_64-apple-darwin
-          - os: ubuntu-latest
-            version: "1.18.0"
-            ocaml: "5.1.1"
-            linking: static
-            target_triple: x86_64-unknown-linux-musl
-          - os: macos-13
-            version: "1.18.0"
-            ocaml: "5.1.1"
-            linking: dynamic
-            target_triple: x86_64-apple-darwin
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Set archive environment variables
-        run: |
-          echo "FLAKE_NAME=./flakes/ocaml-lsp-server/#ocaml_lsp_server_$(echo ${{ matrix.version }} | tr . _)_ocaml_$(echo ${{ matrix.ocaml }} | tr . _)_${{ matrix.linking }}" >> $GITHUB_ENV
-          echo "ARCHIVE_NAME=ocaml-lsp-server.${{ matrix.version }}+binary-ocaml-${{ matrix.ocaml }}-built-${{ github.ref_name }}-${{ matrix.target_triple }}" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v22
-      - name: Build ocaml-lsp-server
-        run: |
-          nix build $FLAKE_NAME
-          mkdir -p $ARCHIVE_NAME
-          cp -r result/* $ARCHIVE_NAME
-          cp -r flakes/ocaml-lsp-server/static/* $ARCHIVE_NAME
-          find $ARCHIVE_NAME -type d -exec chmod +w {} +
-          tar --format=posix -cvf $ARCHIVE_NAME.tar $ARCHIVE_NAME
-          gzip -9 $ARCHIVE_NAME.tar
-      - uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          artifacts: "*.tar.gz"
-
-
   ocaml-lsp-server-build-script:
     name: ocaml-lsp-server binaries via build.sh
     permissions:
@@ -118,32 +17,26 @@ jobs:
           - os: macos-14
             version: "1.19.0"
             ocaml: "5.2.1"
-            linking: dynamic
             target_triple: aarch64-apple-darwin
           - os: macos-14
             version: "1.19.0"
             ocaml: "5.2.0"
-            linking: dynamic
             target_triple: aarch64-apple-darwin
           - os: macos-14
             version: "1.18.0"
             ocaml: "5.1.1"
-            linking: dynamic
             target_triple: aarch64-apple-darwin
           - os: macos-13
             version: "1.19.0"
             ocaml: "5.2.1"
-            linking: dynamic
             target_triple: x86_64-apple-darwin
           - os: macos-13
             version: "1.19.0"
             ocaml: "5.2.0"
-            linking: dynamic
             target_triple: x86_64-apple-darwin
           - os: macos-13
             version: "1.18.0"
             ocaml: "5.1.1"
-            linking: dynamic
             target_triple: x86_64-apple-darwin
 
     runs-on: ${{ matrix.os }}
@@ -162,6 +55,42 @@ jobs:
           allowUpdates: true
           artifacts: "*.tar.gz"
 
+
+  ocaml-lsp-server-dockerfile:
+    name: ocaml-lsp-server binaries via docker
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ocaml: ["5.2.1", "5.2.0", "5.1.1"]
+        include:
+          - os: ubuntu-latest
+            version: "1.19.0"
+            ocaml: "5.2.1"
+            target_triple: x86_64-unknown-linux-muslc
+          - os: ubuntu-latest
+            version: "1.19.0"
+            ocaml: "5.2.0"
+            target_triple: x86_64-unknown-linux-muslc
+          - os: ubuntu-latest
+            version: "1.18.0"
+            ocaml: "5.1.1"
+            target_triple: x86_64-unknown-linux-muslc
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ocamlformat
+        run: |
+          docker buildx build build-scripts/ocaml-lsp-server --target=export --output type=local,dest=$(pwd)/out/ --build-arg TAG=${{ matrix.github.ref_name }} --build-arg TARGET=${{ matrix.target_triple }} --build-arg OCAML_VERSION=${{ matrix.ocaml }} --build-arg OCAML_LSP_SERVER_VERSION=${{ matrix.version }}
+      - uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: "out/*.tar.gz"
+
+
   ocamlformat-build-script:
     name: ocamlformat binaries via build.sh
     permissions:
@@ -174,32 +103,26 @@ jobs:
           - os: ubuntu-latest
             version: "0.26.2"
             ocaml: "5.2.1"
-            linking: static
             target_triple: x86_64-unknown-linux-musl
           - os: macos-13
             version: "0.26.2"
             ocaml: "5.2.1"
-            linking: dynamic
             target_triple: x86_64-apple-darwin
           - os: macos-14
             version: "0.26.2"
             ocaml: "5.2.1"
-            linking: dynamic
             target_triple: aarch64-apple-darwin
           - os: ubuntu-latest
             version: "0.26.1"
             ocaml: "5.1.1"
-            linking: static
             target_triple: x86_64-unknown-linux-musl
           - os: macos-13
             version: "0.26.1"
             ocaml: "5.1.1"
-            linking: dynamic
             target_triple: x86_64-apple-darwin
           - os: macos-14
             version: "0.26.1"
             ocaml: "5.1.1"
-            linking: dynamic
             target_triple: aarch64-apple-darwin
 
     runs-on: ${{ matrix.os }}
@@ -216,4 +139,4 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
- 
+          artifacts: "*.tar.gz"
