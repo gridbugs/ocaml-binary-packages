@@ -24,12 +24,13 @@ a list of steps for making the binary versions of this package available.
    one that builds the packages natively for MacOS, and another that builds the
    packages in a docker container for Linux (this makes it easier to distribute
    statically-linked binaries on Linux). Each entry in the `include` lists
-   specifies a package version (`version`) and an OCaml version (`ocaml`). For
-   ocamllsp specifically it's useful to build each version of the package with
-   as many different versions of the compiler as possible since the ocamllsp
-   executable can only analyze code that was compiled with the same version of
-   the compiler as itself. Find out which versions of the compiler are
-   supported by running `opam show ocamllsp.1.20.0`.
+   specifies a package version (`version`) and an OCaml version (`ocaml`).
+
+   For ocamllsp specifically it's useful to build each version of the package
+   with as many different versions of the compiler as possible since the
+   ocamllsp executable can only analyze code that was compiled with the same
+   version of the compiler as itself. Find out which versions of the compiler
+   are supported by running `opam show ocamllsp.1.20.0`.
 
    In this case, the new entries were:
 ```
